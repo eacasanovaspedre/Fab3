@@ -1,10 +1,12 @@
 ﻿namespace FabulousX
 
+open System
 open System.ComponentModel
 open System.Runtime.CompilerServices
 open Fabulous
 open FabulousX
 
+[<Struct>]
 type MvuMapping<'model, 'mappedModel> =
     [<EditorBrowsable(EditorBrowsableState.Never)>]
     val public SourceContext: ComponentContext
@@ -34,7 +36,7 @@ type MvuMappingRequest<'model, 'mappedModel> = delegate of unit -> MvuMapping<'m
 [<AutoOpen>]
 module MvuMappingBuilders =
     type Context with
-
+        [<Obsolete("Use Prop and Binding")>]
         static member inline MapMvu(modelValue: ModelValueX<'model>, map: 'model -> 'mappedModel) =
             MvuMappingRequest(fun () -> MvuMapping(modelValue, map))
 

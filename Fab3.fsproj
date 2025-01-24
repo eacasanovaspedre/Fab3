@@ -1,5 +1,4 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
     <TargetFrameworks>net9.0-android;net9.0-ios;net9.0-maccatalyst</TargetFrameworks>
     <TargetFrameworks Condition="$([MSBuild]::IsOSPlatform('windows'))">$(TargetFrameworks);net9.0-windows10.0.19041.0</TargetFrameworks>
@@ -11,20 +10,15 @@
     <SingleProject>true</SingleProject>
     <EnableDefaultItems>false</EnableDefaultItems>
     <DisableImplicitFSharpCoreReference>true</DisableImplicitFSharpCoreReference>
-
     <!-- Display name -->
     <ApplicationTitle>Fab3</ApplicationTitle>
-
     <!-- App Identifier -->
     <ApplicationId>com.companyname.Fab3</ApplicationId>
     <ApplicationIdGuid>3002AA72-E892-4ED9-88A0-E3695F141ED6</ApplicationIdGuid>
-
     <!-- Versions -->
     <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
     <ApplicationVersion>1</ApplicationVersion>
-
     <TargetPlatformIdentifier Condition=" $(TargetPlatformIdentifier) == '' ">$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)'))</TargetPlatformIdentifier>
-
     <SupportedOSPlatformVersion Condition="$(TargetPlatformIdentifier) == 'ios'">15.0</SupportedOSPlatformVersion>
     <SupportedOSPlatformVersion Condition="$(TargetPlatformIdentifier) == 'maccatalyst'">15.0</SupportedOSPlatformVersion>
     <SupportedOSPlatformVersion Condition="$(TargetPlatformIdentifier) == 'android'">21.0</SupportedOSPlatformVersion>
@@ -32,32 +26,27 @@
     <TargetPlatformMinVersion Condition="$(TargetPlatformIdentifier) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
     <SupportedOSPlatformVersion Condition="$(TargetPlatformIdentifier) == 'tizen'">6.5</SupportedOSPlatformVersion>
   </PropertyGroup>
-
   <ItemGroup>
     <Compile Include="MvuX.fs" />
     <Compile Include="MvuMapping.fs" />
+    <Compile Include="Prop.fs" />
+    <Compile Include="PropBinding.fs" />
     <Compile Include="App.fs" />
     <Compile Include="MauiProgram.fs" />
   </ItemGroup>
-
   <ItemGroup>
     <!-- App Icon -->
     <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" />
-
     <!-- Custom Fonts -->
     <MauiFont Include="Resources\Fonts\*" />
-
     <!-- Images -->
     <MauiImage Include="Resources\Images\*" />
     <MauiImage Update="Resources\Images\dotnet_bot.svg" BaseSize="168,208" />
-
     <!-- Raw Assets (also remove the "Resources\Raw" prefix) -->
     <MauiAsset Include="Resources\Raw\*" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
-
     <!-- Splash Screen -->
     <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" />
   </ItemGroup>
-
   <ItemGroup Condition="$(TargetPlatformIdentifier) == 'android'">
     <AndroidResource Include="$(AndroidProjectFolder)Resources/*/*" />
     <AndroidResource Remove="$(AndroidProjectFolder)Resources/raw/.*" />
@@ -67,33 +56,27 @@
     <Compile Include="$(AndroidProjectFolder)MainActivity.fs" />
     <Compile Include="$(AndroidProjectFolder)MainApplication.fs" />
   </ItemGroup>
-
   <ItemGroup Condition="$(TargetPlatformIdentifier) == 'ios'">
     <None Include="$(iOSProjectFolder)Info.plist" LogicalName="Info.plist" />
     <Compile Include="$(iOSProjectFolder)AppDelegate.fs" />
     <Compile Include="$(iOSProjectFolder)Program.fs" />
   </ItemGroup>
-
   <ItemGroup Condition="$(TargetPlatformIdentifier) == 'maccatalyst'">
     <None Include="$(MacCatalystProjectFolder)Info.plist" LogicalName="Info.plist" />
     <Compile Include="$(MacCatalystProjectFolder)AppDelegate.fs" />
     <Compile Include="$(MacCatalystProjectFolder)Program.fs" />
   </ItemGroup>
-
   <ItemGroup Condition="$(TargetPlatformIdentifier) == 'windows'">
     <Manifest Include="$(WindowsProjectFolder)app.manifest" />
     <AppxManifest Include="$(WindowsProjectFolder)Package.appxmanifest" />
     <Compile Include="$(WindowsProjectFolder)App.fs" />
     <Compile Include="$(WindowsProjectFolder)Main.fs" />
-
     <PackageReference Include="FSharp.Maui.WinUICompat" Version="1.1.0" />
   </ItemGroup>
-
   <ItemGroup Condition="$(TargetPlatformIdentifier) == 'tizen'">
     <TizenManifestFile Include="$(TizenProjectFolder)tizen-manifest.xml" />
     <Compile Include="$(TizenProjectFolder)Main.fs" />
   </ItemGroup>
-
   <ItemGroup>
     <PackageReference Include="Fabulous" Version="3.0.0-pre16" />
     <PackageReference Include="Fabulous.MauiControls" Version="9.0.0-pre5" />
@@ -101,5 +84,4 @@
     <PackageReference Include="Microsoft.Maui.Controls" Version="9.0.0" />
     <PackageReference Include="Microsoft.Maui.Controls.Compatibility" Version="9.0.0" />
   </ItemGroup>
-
 </Project>

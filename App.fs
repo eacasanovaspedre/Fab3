@@ -28,13 +28,12 @@ module Counter =
     let program dispatchToParent =
         Program.statefulWithCmd init (update dispatchToParent)
 
-    let view dispatchToParent parentModelValue (*this now works*) =
+    let view dispatchToParent prop (*this now works*)  =
         let program = Program.statefulWithCmd init (update dispatchToParent)
 
-        (Component("Counter") {
-            let! timesFive = Context.MapMvu (parentModelValue, fun { NumberOfTimesFiveWasReached = x } -> x)
+        (Component "Counter" {
+            let! timesFive = Context.PropBinding prop
             let! model = Context.Mvu program
-            
 
             let text =
                 if model.Count = 0 then
@@ -43,7 +42,7 @@ module Counter =
                     $"Clicked {model.Count} times"
 
             VStack(spacing = 25.) {
-                Label($"Value in child {timesFive}")
+                Label $"Value in child %d{timesFive}"
                 Button(text, Clicked).centerHorizontal ()
             }
         })
@@ -52,7 +51,7 @@ module App =
 
     type Msg = | MultipleOfFiveReached
 
-    let init _ = { NumberOfTimesFiveWasReached = 0 }
+    let init _ = { NumberOfTimesFiveWasReached = 0; }
 
     let update msg { NumberOfTimesFiveWasReached = x } =
         match msg with
@@ -66,24 +65,51 @@ module App =
         |> Program.withSubscription (fun _ ->
             [ [ "whatever" ], (fun dispatch -> ev.Publish.Subscribe(fun _ -> dispatch MultipleOfFiveReached)) ])
 
+    let program1 () : Program<_, _, _> =
+        Program.stateful init update
+
     let view () =
         let e, p = program ()
 
-        (Component("Fab 3") {
+        (Component "Fab 3" {
 
             let! modelValue = Context.MvuX p
-            let { NumberOfTimesFiveWasReached = numberOfTimesFiveWasReached } = modelValue.Current
+            let! childProp = Context.Prop(modelValue, _.NumberOfTimesFiveWasReached)
+
+            let { NumberOfTimesFiveWasReached = numberOfTimesFiveWasReached } =
+                modelValue.Current
 
             Application() {
                 Window(
                     ContentPage(
                         ScrollView(
                             VStack(spacing = 25.) {
-                                Label($"Value in parent: {numberOfTimesFiveWasReached}")
-                                Counter.view (fun _ -> e.Trigger(())) modelValue //this now works
+                                Label $"Value in parent: {numberOfTimesFiveWasReached}"
+                                Counter.view (fun _ -> e.Trigger(())) childProp //this now works
                             }
                         )
                     )
                 )
             }
         })
+
+    // let p = program1 ()
+
+    // let childView prop =
+    //     Component "Child Component" {
+    //         let! prop = Context.PropBinding prop
+    //         VStack() {
+    //             Label(prop)
+    //         }
+    //     }
+    
+    // let parentView () =
+    //     Component "Parent Component" {
+    //         let! modelValue = Context.MvuX p
+    //         let! childProp = Context.Prop (modelValue, fun model -> $"Value from parent: {model.SomeProperty}")
+
+    //         VStack() {
+    //             Label modelValue.Current.SomeProperty
+    //             childView childProp
+    //         }
+    //     }
