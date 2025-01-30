@@ -6,8 +6,6 @@ open Fabulous.Maui
 
 open type Fabulous.Maui.View
 
-type AppModel = { NumberOfTimesFiveWasReached: int }
-
 module Counter =
     type Model = { Count: int }
 
@@ -28,12 +26,11 @@ module Counter =
     let program dispatchToParent =
         Program.statefulWithCmd init (update dispatchToParent)
 
-    let view dispatchToParent prop (*this now works*)  =
+    let view dispatchToParent (prop: Prop<_>)  =
         let program = Program.statefulWithCmd init (update dispatchToParent)
-
         (Component "Counter" {
-            let! timesFive = Context.PropBinding prop
             let! model = Context.Mvu program
+            let! timesFive = Context.PropBinding prop
 
             let text =
                 if model.Count = 0 then
@@ -48,22 +45,24 @@ module Counter =
         })
 
 module App =
+    
+    type AppModel = { NumberOfTimesFiveWasReached: int array }
 
-    type Msg = | MultipleOfFiveReached
+    type Msg = | MultipleOfFiveReached of int
 
-    let init _ = { NumberOfTimesFiveWasReached = 0; }
+    let init _ = { NumberOfTimesFiveWasReached = [| 0; 0; 0; 0 |]; }
 
     let update msg { NumberOfTimesFiveWasReached = x } =
         match msg with
-        | MultipleOfFiveReached -> { NumberOfTimesFiveWasReached = x + 1 }
+        | MultipleOfFiveReached index -> { NumberOfTimesFiveWasReached = x |> Array.mapi (fun i v -> if i = index then v + 1 else v) }
 
     let program () : _ * Program<_, _, _> =
-        let ev = Event<unit>()
+        let ev = Event<int>()
 
         ev,
         Program.stateful init update
         |> Program.withSubscription (fun _ ->
-            [ [ "whatever" ], (fun dispatch -> ev.Publish.Subscribe(fun _ -> dispatch MultipleOfFiveReached)) ])
+            [ [ "whatever" ], (fun dispatch -> ev.Publish.Subscribe(fun index -> dispatch (MultipleOfFiveReached index))) ])
 
     let program1 () : Program<_, _, _> =
         Program.stateful init update
@@ -73,43 +72,25 @@ module App =
 
         (Component "Fab 3" {
 
-            let! modelValue = Context.MvuX p
-            let! childProp = Context.Prop(modelValue, _.NumberOfTimesFiveWasReached)
+            let! modelValue = Context.Mvu p
+            //let! childProp = Context.Prop(modelValue, _.NumberOfTimesFiveWasReached)
+            let! childProp = Context.Prop modelValue.NumberOfTimesFiveWasReached
 
             let { NumberOfTimesFiveWasReached = numberOfTimesFiveWasReached } =
-                modelValue.Current
+                modelValue
 
             Application() {
                 Window(
                     ContentPage(
                         ScrollView(
                             VStack(spacing = 25.) {
-                                Label $"Value in parent: {numberOfTimesFiveWasReached}"
-                                Counter.view (fun _ -> e.Trigger(())) childProp //this now works
+                                Label $"Value in parent: %A{numberOfTimesFiveWasReached}"
+                                for i in 0..numberOfTimesFiveWasReached.Length - 1 do
+                                    let p = Prop.map (Array.item i) childProp
+                                    Counter.view (fun () -> e.Trigger i) p //this now works
                             }
                         )
                     )
                 )
             }
         })
-
-    // let p = program1 ()
-
-    // let childView prop =
-    //     Component "Child Component" {
-    //         let! prop = Context.PropBinding prop
-    //         VStack() {
-    //             Label(prop)
-    //         }
-    //     }
-    
-    // let parentView () =
-    //     Component "Parent Component" {
-    //         let! modelValue = Context.MvuX p
-    //         let! childProp = Context.Prop (modelValue, fun model -> $"Value from parent: {model.SomeProperty}")
-
-    //         VStack() {
-    //             Label modelValue.Current.SomeProperty
-    //             childView childProp
-    //         }
-    //     }

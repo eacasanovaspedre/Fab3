@@ -1,6 +1,5 @@
 namespace FabulousX
 
-open System.ComponentModel
 open System.Runtime.CompilerServices
 open Fabulous
 open FabulousX
@@ -25,15 +24,21 @@ type PropBindingExtensions =
         ) =
         ComponentBodyBuilder<'msg, 'marker> (fun envContext treeContext context bindings ->
             let key = int bindings
-            let isFirstTime = context.TryGetValue(key).IsValueNone
+            let isFirstTime = (context.TryGetValue key).IsValueNone
             let prop = fn.Invoke()
 
+            let currentValue = Prop.getValue prop
+
+            context.SetValueInternal(key, currentValue)
+
             if isFirstTime then
+                let propContext = Prop.getContext prop
+
                 context.LinkDisposable(
                     $"prop_binding_{key}",
-                    fun () -> prop.SourceContext.RenderNeeded.Subscribe(fun () -> context.NeedsRender())
+                    fun () -> propContext.RenderNeeded.Subscribe(fun () -> context.NeedsRender())
                 )
                 |> ignore
 
-            (continuation prop.Current)
+            (continuation currentValue)
                 .Invoke(envContext, treeContext, context, bindings + 1<binding>))

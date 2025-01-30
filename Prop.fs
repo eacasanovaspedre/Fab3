@@ -1,56 +1,56 @@
 namespace FabulousX
 
-open System.ComponentModel
 open System.Runtime.CompilerServices
 open Fabulous
-open FabulousX
 
 [<Struct>]
 type Prop<'prop> =
+    | ValueProp of Context: ComponentContext * Key: int
+    | MappedProp of Context: ComponentContext * GetValue: (unit -> 'prop)
 
-    [<EditorBrowsable(EditorBrowsableState.Never)>]
-    val public SourceContext: ComponentContext
-    
-    [<EditorBrowsable(EditorBrowsableState.Never)>]
-    val public PropContext: ComponentContext
-    
-    [<EditorBrowsable(EditorBrowsableState.Never)>]
-    val public PropKey: int
+module internal Prop =
 
-    new(sourceContext, propContext, propKey) =
-        { SourceContext = sourceContext; PropContext = propContext; PropKey = propKey }
+    let inline getValue prop =
+        match prop with
+        | ValueProp (context, key) -> context.TryGetValue<'prop>(key).Value
+        | MappedProp (_, getValue) -> getValue ()
 
-    member inline internal this.Current =
-        this.PropContext.TryGetValue<Lazy<'prop>>(this.PropKey).Value.Value
+    let inline getContext prop =
+        match prop with
+        | ValueProp (context, _)
+        | MappedProp (context, _) -> context
 
-type PropRequest<'model, 'prop> = 
-    delegate of unit ->
-        {| SourceContext: ComponentContext
-           Evaluate: unit -> 'prop |}
+    let inline map f prop =
+        MappedProp(getContext prop, (fun () -> getValue prop |> f))
+
+type PropRequest<'prop> = 'prop
+//| OfMapping of Prop<'srcProp> * ('srcProp -> 'prop)
 
 [<AutoOpen>]
 module PropBuilders =
     type Context with
 
-        static member inline Prop(modelValue: ModelValueX<'model>, map: 'model -> 'prop) =
-            PropRequest (fun () ->
-                {| SourceContext = modelValue.Context
-                   Evaluate = fun () -> map modelValue.Current |})
+        static member inline Prop(value: 'value) = value
 
 type PropExtensions =
     [<Extension>]
     static member inline Bind
         (
             _: ComponentBuilder<'parentMsg, 'marker>,
-            [<InlineIfLambda>] fn: PropRequest<'model, 'prop>,
+            request: PropRequest<'prop>,
             [<InlineIfLambda>] continuation: Prop<'prop> -> ComponentBodyBuilder<'msg, 'marker>
         ) =
         ComponentBodyBuilder<'msg, 'marker> (fun envContext treeContext context bindings ->
             let key = int bindings
+            context.SetValueInternal(key, request)
 
-            let requestResult = fn.Invoke()
+            (continuation (ValueProp(context, key)))
+                .Invoke(envContext, treeContext, context, bindings + 1<binding>)
 
-            context.SetValueInternal(key, Lazy.Create requestResult.Evaluate)
-
-            (continuation (Prop(requestResult.SourceContext, context, key)))
-                .Invoke(envContext, treeContext, context, bindings + 1<binding>))
+        // | OfMapping (srcProp, map) ->
+        //     let componentBodyBuilder =
+        //         MappedProp(context, (fun () -> Prop.getValue srcProp |> map))
+        //         |> continuation
+        //
+        //     componentBodyBuilder.Invoke(envContext, treeContext, context, bindings)
+        )
