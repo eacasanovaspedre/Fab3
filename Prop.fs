@@ -42,15 +42,9 @@ type PropExtensions =
         ) =
         ComponentBodyBuilder<'msg, 'marker> (fun envContext treeContext context bindings ->
             let key = int bindings
+            printfn $"EACP Prop %A{request} is first time: {context.TryGetValue(key).IsNone}"
             context.SetValueInternal(key, request)
 
             (continuation (ValueProp(context, key)))
                 .Invoke(envContext, treeContext, context, bindings + 1<binding>)
-
-        // | OfMapping (srcProp, map) ->
-        //     let componentBodyBuilder =
-        //         MappedProp(context, (fun () -> Prop.getValue srcProp |> map))
-        //         |> continuation
-        //
-        //     componentBodyBuilder.Invoke(envContext, treeContext, context, bindings)
         )

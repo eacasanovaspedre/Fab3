@@ -25,6 +25,7 @@ type PropBindingExtensions =
         ComponentBodyBuilder<'msg, 'marker> (fun envContext treeContext context bindings ->
             let key = int bindings
             let isFirstTime = (context.TryGetValue key).IsValueNone
+            printfn $"EACP Is first time: {isFirstTime}"
             let prop = fn.Invoke()
 
             let currentValue = Prop.getValue prop
@@ -37,6 +38,14 @@ type PropBindingExtensions =
                 context.LinkDisposable(
                     $"prop_binding_{key}",
                     fun () -> propContext.RenderNeeded.Subscribe(fun () -> context.NeedsRender())
+                )
+                |> ignore
+
+                context.LinkDisposable(
+                    $"experiment_{key}",
+                    fun () ->
+                        { new System.IDisposable with
+                            member _.Dispose() = printfn "EACP Disposing" }
                 )
                 |> ignore
 
